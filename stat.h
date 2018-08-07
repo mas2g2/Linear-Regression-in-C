@@ -236,9 +236,18 @@ double slope(List *ylist, List *xlist){
 		return 0;
 	}
 	else{
-		double rise = ylist->head->key - ylist->tail->key;
-		double run = xlist->head->key - xlist->tail->key;
-		return rise/run;
+		double y_mean = mean(ylist);
+		double x_mean = mean(xlist);
+		double xy_sum = 0;
+		Node *p = ylist->head, *q = xlist->head;
+		while(p){
+			xy_sum += p->key * q->key;
+			p = p->next;
+			q = q->next;
+		}
+		double ss_xy = xy_sum - len(xlist)*x_mean*y_mean;
+		double ss_xx = sqrd_sum(xlist) - len(xlist)*x_mean*x_mean;
+		return ss_xy/ss_xx;
 	}
 }
 
@@ -249,7 +258,7 @@ double intercept(List *ylist, List *xlist){
 		return 0;
 	}
 	else{
-		double intercept = -slope(ylist,xlist) * xlist->tail->key + ylist->tail->key;
+		double intercept = mean(ylist) - slope(ylist,xlist)*mean(xlist);
 		return intercept;
 	}
 }
