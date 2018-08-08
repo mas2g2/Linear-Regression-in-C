@@ -17,3 +17,4 @@ list data structures such as:
  - Linear Regression
  - Linear Prediction
  - Correlation Coefficient
+ - Cost Function/ One Half Mean Squared Error
