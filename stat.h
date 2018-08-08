@@ -238,15 +238,19 @@ double slope(List *ylist, List *xlist){
 	else{
 		double y_mean = mean(ylist);
 		double x_mean = mean(xlist);
-		double xy_sum = 0;
+		double xy_product = 0;
+		double ss_xy = 0;
+		double ss_xx = 0;
 		Node *p = ylist->head, *q = xlist->head;
 		while(p){
-			xy_sum += p->key * q->key;
+			xy_product = p->key * q->key;
+			ss_xy += xy_product - len(xlist)*y_mean*x_mean;
+			ss_xx += q->key*q->key - len(xlist)*x_mean*x_mean;
 			p = p->next;
 			q = q->next;
 		}
-		double ss_xy = xy_sum - len(xlist)*x_mean*y_mean;
-		double ss_xx = sqrd_sum(xlist) - len(xlist)*x_mean*x_mean;
+		//double ss_xy = xy_sum - len(xlist)*x_mean*y_mean;
+		//double ss_xx = sqrd_sum(xlist) - len(xlist)*x_mean*x_mean;
 		return ss_xy/ss_xx;
 	}
 }
@@ -280,3 +284,18 @@ double linearPrediction(double input,List* outputList,List *inputList){
        	}
 	return slope(outputList,inputList)*input + intercept(outputList,inputList);
 }
+//cost function or  one half mean squared error function for calculating residual error
+double half_mse(List *ylist, List *xlist){
+	Node *p = ylist->head;
+	double sqrd_error = 0;
+	double error = 0;
+	while(p){
+		error = p->key - linearPrediction(p->key,ylist,xlist);
+		sqrd_error += error*error;
+		p = p->next;
+	}
+	double cost = sqrd_error*0.5;
+	cost = cost/len(ylist);
+	return cost;
+}
+
