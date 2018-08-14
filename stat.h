@@ -287,15 +287,48 @@ double linearPrediction(double input,List* outputList,List *inputList){
 //cost function or  one half mean squared error function for calculating residual error
 double half_mse(List *ylist, List *xlist){
 	Node *p = ylist->head;
+	Node *q = xlist->head;
 	double sqrd_error = 0;
 	double error = 0;
 	while(p){
-		error = p->key - linearPrediction(p->key,ylist,xlist);
+		error = p->key - linearPrediction(q->key,ylist,xlist);
 		sqrd_error += error*error;
 		p = p->next;
+		q = q->next;
 	}
 	double cost = sqrd_error*0.5;
 	cost = cost/len(ylist);
 	return cost;
 }
 
+//Updates slope
+double update_slope(List *xlist,List *ylist, double learning_rate){
+	double slope_derivative = 0;
+	double m = slope(ylist,xlist);
+	Node *p = xlist->head, *q = ylist->head;
+	while(p){
+		// Calculates partial derivative of MSE with respect to slope
+		// dMSE/dm = -2x[y - (mx + b)]
+		slope_derivative += -2*p->key*(q->key - linearPrediction(p->key,ylist,xlist));
+		p = p->next;
+		q = q->next;
+	}
+
+	m -= slope_derivative/(float)len(xlist);
+	m = m * learning_rate;
+	return m;
+}	
+
+//Updates intercept
+double update_intercept(List *ylist, List *xlist, double learning_rate){
+	double b = intercept(ylist,xlist), intercept_derivative = 0;
+	Node *p = ylist->head, *q = xlist->head;
+	while(p){
+		intercept_derivative += -2*(p->key - linearPrediction(q->key,ylist,xlist));
+		p = p->next;
+		q = q->next;
+	}
+	b -= intercept_derivative/(float)len(xlist);
+	b = b*learning_rate;
+	return b;
+}
