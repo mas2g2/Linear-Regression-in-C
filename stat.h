@@ -6,7 +6,7 @@
  * a comprehensive statistical analysis on at most two sets of numbers.
 */
 typedef struct node{	
-	float key;
+	double key;
 	struct node *next;
 }Node;
 
@@ -24,7 +24,7 @@ List *list(){
 }
 
 //Allocates memory for nodes in list
-Node *node(float key){
+Node *node(double key){
 	Node *p = (Node*)malloc(sizeof(Node));
 	p->key = key;
 	p->next = NULL;
@@ -32,7 +32,7 @@ Node *node(float key){
 }
 
 //Adds item to the begining of the list
-List *push(List* ulist, float key){
+List *push(List* ulist,double key){
 	Node *p = node(key);
 	ulist->length++;
 	if(!ulist->head){
@@ -91,7 +91,24 @@ int compare_length(List *ulist1, List *ulist2){
 	if(ulist1->length == ulist2->length)return 1;
 	else return 0;
 }
-
+void readFile(List *xlist,List *ylist){
+	Node *p = xlist->head, *q = ylist->head;
+	FILE *fptr = NULL;
+	char filename[] = "dji.txt";
+	char ch;
+	double v1,v2;
+	fptr = fopen(filename,"r");
+	if(fptr){
+		while(!feof(fptr)){
+			fscanf(fptr,"%lf %lf",&v1,&v2);
+			xlist = push(xlist,v1);
+			ylist = push(ylist,v2);
+		}	
+	}
+	else{
+		printf("File could not be read.\n");
+	}
+}
 //Calculates mean of list
 double mean(List *list){
 	Node *p = NULL;
@@ -273,25 +290,21 @@ void linearRegression(List *ylist, List *xlist){
 	        printf("List must be of the same length.\n");
 	        return;
        	}
-	printf("Linear equation : y = %.2lfx + %.2lf\n",slope(ylist,xlist),intercept(ylist,xlist));
+	printf("Linear equation : y = %lfx + %lf\n",slope(ylist,xlist),intercept(ylist,xlist));
 }
 
 //Predicts future values of inputs based on current data points available
-double linearPrediction(double input,List* outputList,List *inputList){
-	if(compare_length(outputList,inputList) != 1){
-	        printf("List must be of the same length.\n");
-                return 0;
-       	}
-	return slope(outputList,inputList)*input + intercept(outputList,inputList);
+double linearPrediction(double input,double slope,double intercept){
+	return slope*input + intercept;
 }
 //cost function or  one half mean squared error function for calculating residual error
-double half_mse(List *ylist, List *xlist){
+double half_mse(double slope, double intercept,List *ylist, List *xlist){
 	Node *p = ylist->head;
 	Node *q = xlist->head;
 	double sqrd_error = 0;
 	double error = 0;
 	while(p){
-		error = p->key - linearPrediction(q->key,ylist,xlist);
+		error = p->key - linearPrediction(q->key,slope,intercept);
 		sqrd_error += error*error;
 		p = p->next;
 		q = q->next;
@@ -302,33 +315,56 @@ double half_mse(List *ylist, List *xlist){
 }
 
 //Updates slope
-double update_slope(List *xlist,List *ylist, double learning_rate){
+double update_slope(List *ylist, List *xlist,double slope,double intercept,double learning_rate){
 	double slope_derivative = 0;
-	double m = slope(ylist,xlist);
+	double m = slope;
 	Node *p = xlist->head, *q = ylist->head;
 	while(p){
 		// Calculates partial derivative of MSE with respect to slope
 		// dMSE/dm = -2x[y - (mx + b)]
-		slope_derivative += -2*p->key*(q->key - linearPrediction(p->key,ylist,xlist));
+		slope_derivative += -2*p->key*(q->key - linearPrediction(q->key,slope,intercept));
 		p = p->next;
 		q = q->next;
 	}
 
-	m -= slope_derivative/(float)len(xlist);
-	m = m * learning_rate;
+	m -= learning_rate*slope_derivative/(float)len(xlist);
+	
 	return m;
 }	
 
 //Updates intercept
-double update_intercept(List *ylist, List *xlist, double learning_rate){
-	double b = intercept(ylist,xlist), intercept_derivative = 0;
+double update_intercept(List *ylist, List *xlist,double slope, double intercept,double learning_rate){
+	double b = intercept, intercept_derivative = 0;
 	Node *p = ylist->head, *q = xlist->head;
 	while(p){
-		intercept_derivative += -2*(p->key - linearPrediction(q->key,ylist,xlist));
+		intercept_derivative += -2*(p->key - linearPrediction(q->key,slope,intercept));
 		p = p->next;
 		q = q->next;
 	}
-	b -= intercept_derivative/(float)len(xlist);
-	b = b*learning_rate;
+	b -= learning_rate*intercept_derivative/(float)len(xlist);
+	
 	return b;
+}
+
+//Gradient Descent
+//Returns slope and intercept of line needed for smallest error
+double* grad_desc(List *ylist,List *xlist,double slope, double intercept, double learning_rate){
+	double m = slope,error,previous_error = 0,prev_m,prev_b,b = intercept;
+	error = half_mse(m,b,ylist,xlist);
+	previous_error = error;
+	printf("Slope Intercept Error\n");
+	while(previous_error >= error){
+		printf("%.4lf %.4lf %.4lf \n",m,b,error);
+		prev_m = m;
+		prev_b = b;
+		previous_error = error;
+		m = update_slope(ylist,xlist,m,b,learning_rate);
+		b = update_intercept(ylist,xlist,m,b,learning_rate);
+		error = half_mse(m,b,ylist,xlist);
+		
+	}
+	double *param = (double*)malloc(sizeof(double)*2);
+	param[0] = prev_m;
+	param[1] = prev_b;
+	return param;
 }
