@@ -3,9 +3,9 @@ Email : mileshshah@gmail.com
 
 Program: stat.h
 
-This is a library in C for allocating memory and storing numbers in a list.
+This is a library in C for allocating memory and storing numbers in a linked list.
 This library also includes functions for performing statistical analysis on 
-list data structures such as:
+linked list data structures such as:
  - Mean
  - Median
  - Mode
