@@ -19,3 +19,4 @@ linked list data structures such as:
  - Correlation Coefficient
  - Cost Function/ One Half Mean Squared Error
  - Gradient Descent Algorithm
+# Linear-Regression-in-C
